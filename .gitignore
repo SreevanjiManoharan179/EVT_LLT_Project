@@ -1,0 +1,42 @@
+# Local Python environments and generated caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Data and model files are distributed with tagged GitHub Releases.
+/data/processed/
+/data/release-info/
+/models/
+/data/raw/**/*.zip
+/data/raw/nasa_pcoe/extracted/
+/outputs/experiment_results/
+/EVT_LLT_Project-*-data.zip
+/SHA256SUMS
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.vscode/
+.idea/
+
+# OS, editor and office temporary files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.~lock.*#
+~$*

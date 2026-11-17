@@ -1,0 +1,17 @@
+1. Introduction – Problem identification, objectives and scope.
+
+2. Literature Review – Existing research, technologies and research gaps.
+
+3. Problem Formulation and Proposed Methodology – Problem statement, proposed solution, block diagram, mathematical modelling and algorithms.
+
+4. Data Collection and Preprocessing – Dataset sources, data description, cleaning and preprocessing.
+
+5. Implementation and Simulation – Software, tools, model development and implementation.
+
+6. Results and Discussion – Data analysis, graphs, simulation outputs and performance evaluation.
+
+7. Conclusion and Future Scope – Key findings, achievements, limitations and future improvements.
+
+8. References – Research papers, books, websites, datasets and software documentation (IEEE format).
+
+Additional: Abstract, Appendices and Individual Student Contributions.

@@ -1,0 +1,62 @@
+[server]
+headless = true
+port = 8501
+runOnSave = false
+maxUploadSize = 50
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = "full"
+
+# Fonts are bundled in static/fonts (SIL Open Font License) so the lab looks identical offline.
+[[theme.fontFaces]]
+family = "Barlow"
+url = "app/static/fonts/barlow-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+[[theme.fontFaces]]
+family = "Barlow"
+url = "app/static/fonts/barlow-latin-500-normal.woff2"
+weight = 500
+style = "normal"
+[[theme.fontFaces]]
+family = "Barlow"
+url = "app/static/fonts/barlow-latin-600-normal.woff2"
+weight = 600
+style = "normal"
+[[theme.fontFaces]]
+family = "Barlow"
+url = "app/static/fonts/barlow-latin-700-normal.woff2"
+weight = 700
+style = "normal"
+[[theme.fontFaces]]
+family = "Barlow Semi Condensed"
+url = "app/static/fonts/barlow-semi-condensed-latin-500-normal.woff2"
+weight = 500
+style = "normal"
+[[theme.fontFaces]]
+family = "Barlow Semi Condensed"
+url = "app/static/fonts/barlow-semi-condensed-latin-600-normal.woff2"
+weight = 600
+style = "normal"
+
+[theme]
+base = "light"
+primaryColor = "#2456C9"
+backgroundColor = "#EEF1F4"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#18212B"
+font = "Barlow, sans-serif"
+headingFont = "'Barlow Semi Condensed', Barlow, sans-serif"
+baseFontSize = 15
+baseRadius = "4px"
+showWidgetBorder = true
+borderColor = "#D3DAE1"
+
+[theme.sidebar]
+backgroundColor = "#F7F9FA"
+secondaryBackgroundColor = "#FFFFFF"

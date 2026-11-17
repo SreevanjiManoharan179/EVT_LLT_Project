@@ -1,0 +1,11 @@
+{
+  "built_utc": "2026-11-16T14:12:38+00:00",
+  "cells": 34,
+  "discharges": 2767,
+  "charges": 2812,
+  "eis_tests": 1956,
+  "ts_discharge_rows": 764668,
+  "ts_charge_rows": 6512861,
+  "eis_points": 93888,
+  "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e"
+}
