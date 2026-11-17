@@ -3,6 +3,19 @@
 These are proposed extensions, not implemented features or promised results. Discuss a
 proposal in an issue before beginning a large change.
 
+## Flagship M.Tech projects
+
+The README describes four larger projects in detail, each with the code it extends and the
+baseline numbers to beat:
+
+1. Adaptive twin: joint SOC–SOH estimation with an ageing-aware OCV (recommended first project).
+2. Pack-level twin and temperature-aware fast charging.
+3. SOH and remaining useful life at scale.
+4. Live hardware-in-the-loop digital twin.
+
+See [README.md](README.md#extend-it-four-mtech-level-projects). The smaller items below suit
+shorter contributions.
+
 ## Getting started
 
 - Add a short tutorial that traces one cell from raw data through calibration to a plot.

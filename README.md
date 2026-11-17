@@ -11,13 +11,24 @@ leakage-free machine learning, and checks everything against measured cells and 
 
 ![Overview page](outputs/figures/demo/d01_overview.png)
 
-## Community edition
+## Start here: for the next group
 
 Course-assigned title: **AI-Based Virtual Laboratory for Battery Digital Twin (SOC/SOH)**.
 
-This repository is a starting point for future student groups to study the existing lab,
-reproduce its results, and develop new models and experiments. The original Group 14
-reports and presentation remain in `docs/`.
+This repository is a working baseline that the next group can run, study and extend. Use it as a teaching lab
+for SOC and SOH, as a test bench for new estimators and models, or as the starting point of an M.Tech project.
+The original Group 14 report and presentation are in `docs/`.
+
+1. **Run it (about 15 minutes).** Follow the [quick start](#quick-start): clone the `v1.2.0` source, download
+   the matching data release, start the lab with `bash run.sh`, and click through the eight pages.
+2. **Understand it (a few days).** Read the [technical report](docs/Group14_Technical_Report.pdf), then the
+   engine in pipeline order: `data_pipeline.py`, `ecm.py` and `thermal.py`, `simulator.py`, `estimators.py`,
+   `soh.py`, `calibration.py`. The pages in `pages/` only call the engine and plot the results.
+3. **Extend it (your project).** Pick one of the [four M.Tech-level projects](#extend-it-four-mtech-level-projects)
+   below. Add your method beside ours, run it on the same held-out cells, and show on the Validation page that
+   it beats the [baseline results](#baseline-results-to-beat).
+
+More detail:
 
 - [Get the data and models](docs/DATA_SETUP.md)
 - [Contribute changes](CONTRIBUTING.md)
@@ -78,7 +89,10 @@ If Ubuntu or Debian cannot create a virtual environment, install the distributio
 
 Every chart is tagged **Measured**, **Simulated**, **Estimated**, **Predicted** or **Reference**. The colours are used for provenance only.
 
-## Engineering results (all computed by this code, `python -m g14lab.calibration`)
+## Baseline results to beat
+
+Every number below is computed by this code (`python -m g14lab.calibration`). Compare new methods against
+them under the same protocol: the same cells, the same held-out cycles and the same metrics.
 
 | Subsystem | Result |
 |---|---|
@@ -92,6 +106,134 @@ Every chart is tagged **Measured**, **Simulated**, **Estimated**, **Predicted** 
 | SOH uncertainty | Cross-conformal 90 % intervals cover 82 %; RF tree quantiles cover only 49 % |
 | Fade forecasting (backtest, 16 forecasts) | Linear trend: median EOL error 8 cycles. Exponential and double-exponential models diverge (median 18–25 cycles) |
 | Tesla packs | Implied capacity 167 Ah (BEV1) vs 210 Ah (BEV2). Mid-SOC slope 132 vs 972 mV/% points to LFP vs NCA. Drives below 10 °C use 19 % more energy per km |
+
+## Extend it: four M.Tech-level projects
+
+Each project closes a limitation we measured, reuses most of the existing code, and has a clear number to beat.
+
+| # | Project | Limitation it closes | New data or hardware | Difficulty | Best suited to |
+|---|---|---|---|---|---|
+| 1 | Adaptive twin: joint SOC–SOH estimation with an ageing-aware OCV | Late-life voltage error; capacity estimated offline | None | Medium–high | **Recommended first project**: estimation and modelling |
+| 2 | Pack-level twin and temperature-aware fast charging | Cell-level twin; Tesla data used only descriptively | None (Tesla data is in the release) | High | EV systems and optimal control |
+| 3 | SOH and remaining useful life at scale | SOH models trained on four cells | A larger public ageing dataset | Medium | Machine learning |
+| 4 | Live hardware-in-the-loop digital twin | Offline replay, no live synchronisation | A low-cost one-cell test rig | High | Automation and embedded systems |
+
+**Where to start.** Project 1 is the best first step. It builds directly on `ecm.py` and `estimators.py`, needs
+no new data, and attacks our two weakest results: the late-life voltage error (142 mV) and the SOC error floor
+(4.6–7 %). It is also a classic thesis topic, state and parameter estimation. Groups from automation or robotics
+may prefer Project 4, which turns the replay twin into a live one while reusing the same estimators.
+
+### 1. Adaptive twin: joint SOC–SOH estimation with an ageing-aware OCV
+
+**Why.** The twin keeps one OCV curve for the whole life of the cell. As the electrodes age the curve changes
+shape, so the held-out voltage error grows late in life (142 mV; updating the resistances only reaches
+125–127 mV), and the SOC filters level off at 4.6–7 % MAE. Capacity currently comes from an offline Random
+Forest, not from the filter itself.
+
+**Build.**
+
+- Make OCV depend on ageing: either an OCV(SOC, SOH) map identified across life, or an electrode-level model in
+  which loss of lithium inventory and of active material shifts and stretches the half-cell curves (Birkl et al.,
+  2017). PyBaMM's single-particle model with electrolyte can serve as a physics reference (Sulzer et al., 2021).
+- Extend `estimators.py` to a dual or joint EKF/UKF that estimates SOC together with capacity and R0 online
+  (Plett, 2004, Part 3).
+- Optionally add a second RC branch or SOC-dependent R0, and test whether the extra parameters are identifiable.
+
+**Where it plugs in.** `src/g14lab/ecm.py` (OCV parameterisation), `estimators.py` (augmented state),
+`calibration.py` (benchmarks), `pages/calibrate.py` and `pages/soc.py`.
+
+**Validate.** Use our 10 held-out cycles and the leave-one-cell-out split. Beat a late-life voltage RMSE of
+142 mV, a median SOC MAE of 4.6 % (adaptive EKF) and a capacity RMSE of 50.9 mAh (Random Forest).
+
+### 2. Pack-level twin and temperature-aware fast charging
+
+**Why.** The twin works at cell level, while the Tesla telemetry is only analysed descriptively. The questions
+that matter in a vehicle are pack questions, such as how fast a pack can charge without overheating.
+
+**Build.**
+
+- A pack model: series–parallel scaling of the cell circuit model with cell-to-cell spread, plus a lumped pack
+  thermal model with a cooling term.
+- Calibrate it on the KU Leuven sessions: quasi-OCV from slow AC charges, resistance from power steps in drives,
+  and heating from DC fast charges. Keep cell parameters and pack parameters separate.
+- Design a charging controller, first rule-based CC-CV variants and then model predictive control, that
+  minimises 10–80 % charge time within voltage and temperature limits. Compare it with the measured Tesla power
+  taper; Attia et al. (2020) show a data-driven way to search charging protocols.
+
+**Where it plugs in.** `telemetry.py` (session extraction), a new `pack.py`, `simulator.py` (pack mode),
+`pages/thermal.py` and `pages/vehicle.py`.
+
+**Validate.** Hold out whole sessions. Report pack voltage and temperature RMSE on unseen fast charges, charge
+time and constraint violations. The implied pack capacities (167 and 210 Ah) and the 19 % cold-weather penalty
+are reference points.
+
+### 3. SOH and remaining useful life at scale
+
+**Why.** Our SOH models learn from four reference cells, so their errors (47.8–50.9 mAh) are indicative only,
+and a simple linear trend wins fade forecasting because the data are small.
+
+**Build.**
+
+- Add a larger public dataset through a new loader that writes the same parquet tables, for example the
+  MIT–Stanford–Toyota fast-charging set (124 cells; Severson et al., 2019, available from data.matr.io) or the
+  CALCE or Oxford degradation data.
+- Compare gradient boosting on our indicators with sequence models (1-D CNN or LSTM) on partial charge curves,
+  then add physics-informed constraints such as monotonic fade and capacity–resistance consistency (Raissi et
+  al., 2019).
+- Test transfer across chemistries and temperatures: train on one dataset and adapt to another with a few cells.
+
+**Where it plugs in.** `data_pipeline.py` (new loader), `soh.py`, `pages/soh.py`.
+
+**Validate.** Keep cell-level splits (leave-one-cell-out or leave-batch-out) and report conformal interval
+coverage. On the NASA cells, beat 47.8 mAh RMSE with intervals that reach the nominal 90 % coverage; on the new
+dataset, report the same metrics and the end-of-life error of early predictions.
+
+### 4. Live hardware-in-the-loop digital twin
+
+**Why.** The current twin replays recorded data and is not synchronised with a real battery, which is what
+separates a digital twin from an offline simulation.
+
+**Build.**
+
+- A one-cell rig: an 18650 cell with a protection board and fuse, a programmable or MOSFET-based load, a CC-CV
+  charger, an INA226-class current and voltage sensor, a thermistor, and a microcontroller such as an ESP32
+  streaming time-stamped samples over serial or MQTT.
+- A `live.py` reader and a Live twin page that run the existing EKF on the stream, update R0 and capacity
+  online (the digital shadow), and flag sensor faults from the filter innovations.
+- Optionally port the EKF to the microcontroller in C and compare it with the Python reference.
+
+**Where it plugs in.** A new `src/g14lab/live.py` and `pages/live.py`, reusing `estimators.py` and `ecm.py`.
+Tag live samples as Measured.
+
+**Validate.** Measure the cell's reference capacity with a full slow discharge, then report live SOC error,
+parameter-tracking stability and end-to-end latency. Safety first: never leave a charging cell unattended, add a
+temperature cut-off, and work in a fire-resistant enclosure.
+
+### Ground rules for any extension
+
+- Keep the provenance tags: Measured, Simulated, Estimated, Predicted and Reference.
+- Validate on cells, cycles or sessions the model never saw. Never split adjacent cycles of one cell between
+  training and testing.
+- Add your method beside the baseline instead of replacing it, so the Validation page shows both.
+- Add tests in `tests/` for new physics or estimators.
+- Publish new data or models as a new tagged release with a checksum manifest; do not commit binaries (see
+  [what belongs in Git](docs/DATA_SETUP.md#what-belongs-in-git)).
+
+### References for the projects
+
+1. G. L. Plett, "Extended Kalman filtering for battery management systems of LiPB-based HEV battery packs:
+   Part 3. State and parameter estimation," *Journal of Power Sources*, vol. 134, no. 2, pp. 277–292, 2004.
+2. C. R. Birkl, M. R. Roberts, E. McTurk, P. G. Bruce and D. A. Howey, "Degradation diagnostics for lithium ion
+   cells," *Journal of Power Sources*, vol. 341, pp. 373–386, 2017.
+3. K. A. Severson et al., "Data-driven prediction of battery cycle life before capacity degradation," *Nature
+   Energy*, vol. 4, pp. 383–391, 2019.
+4. P. M. Attia et al., "Closed-loop optimization of fast-charging protocols for batteries with machine
+   learning," *Nature*, vol. 578, pp. 397–402, 2020.
+5. M. Raissi, P. Perdikaris and G. E. Karniadakis, "Physics-informed neural networks: A deep learning framework
+   for solving forward and inverse problems involving nonlinear partial differential equations," *Journal of
+   Computational Physics*, vol. 378, pp. 686–707, 2019.
+6. V. Sulzer, S. G. Marquis, R. Timms, M. Robinson and S. J. Chapman, "Python Battery Mathematical Modelling
+   (PyBaMM)," *Journal of Open Research Software*, vol. 9, no. 1, p. 14, 2021.
 
 ## Architecture
 
@@ -165,10 +307,13 @@ and its MD5 matches the repository record. Full provenance is in `data/data_mani
 - Tesla SOC is BMS-reported, and implied capacity is a proxy. Cell parameters are never transferred to the packs.
 - The twin is calibrated offline and replays recorded data; it is not synchronised with a live battery.
 
+Each of these limitations is an opening for one of the [four projects](#extend-it-four-mtech-level-projects).
+
 ## Contributing and licence
 
 Open an issue to discuss a change, then submit a focused pull request following
-[CONTRIBUTING.md](CONTRIBUTING.md). The [roadmap](ROADMAP.md) lists possible next projects.
+[CONTRIBUTING.md](CONTRIBUTING.md). The [four projects](#extend-it-four-mtech-level-projects) above and the
+[roadmap](ROADMAP.md) list possible next steps.
 Preserve the distinction between measured, simulated, estimated, predicted, and reference results.
 
 The group's original source code and original documentation are available under the
